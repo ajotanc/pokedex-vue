@@ -36,4 +36,10 @@ export interface PokemonDetail {
   weight: number;
   types: PokemonType[];
   sprites: PokemonSprites;
+  cries: PokemonSounds;
+}
+
+export interface PokemonSounds {
+  latest: string;
+  legacy: string;
 }

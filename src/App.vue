@@ -8,6 +8,7 @@ const searchTerm = ref<string>("");
 const isLoading = ref<boolean>(false);
 const isSearching = ref<boolean>(false);
 const initialFetchDone = ref<boolean>(false);
+const pokemonGridRef = ref<HTMLElement | null>(null);
 
 const fetchInitialPokemon = async () => {
   isLoading.value = true;
@@ -49,6 +50,12 @@ const locallyFilteredList = computed(() => {
   });
 });
 
+const scrollToFirstItem = () => {
+  if (!searchTerm.value && pokemonGridRef.value) {
+    pokemonGridRef.value.scrollLeft = 0;
+  }
+};
+
 const searchExternally = async () => {
   const term = searchTerm.value.toLowerCase().trim();
   if (!term) return;
@@ -77,6 +84,8 @@ const searchExternally = async () => {
     isSearching.value = false;
   }
 };
+
+const sound = computed(() => props.pokemon.cries.latest);
 </script>
 
 <template>
@@ -95,7 +104,11 @@ const searchExternally = async () => {
           <span class="circle"></span>
           <span class="circle"></span>
         </div>
-        <ul class="pokemon-grid" v-if="locallyFilteredList.length > 0">
+        <ul
+          class="pokemon-grid"
+          v-if="locallyFilteredList.length > 0"
+          ref="pokemonGridRef"
+        >
           <PokemonCard
             v-for="pokemon in locallyFilteredList"
             :key="pokemon.id"
@@ -108,14 +121,15 @@ const searchExternally = async () => {
         >
           <p>Nenhum Pokémon encontrado nos primeiros 100.</p>
           <p>
-            Pressione o botão "Azul" ou Enter para pesquisar na API completa.
+            Pressione o botão "<span class="color-blue">Azul</span>" ou Enter
+            para pesquisar na API completa.
           </p>
         </div>
         <div class="pokemon-grid default" v-else-if="isLoading">
           <p>Carregando os primeiros 100 Pokémon...</p>
         </div>
         <div id="container-stuff">
-          <span id="red-circle"></span>
+          <div id="red-circle"></div>
           <div id="container-bar">
             <span class="bar"></span>
             <span class="bar"></span>
@@ -149,6 +163,7 @@ const searchExternally = async () => {
             placeholder="Nome ou ID..."
             class="search-input"
             @keyup.enter="searchExternally"
+            @input="scrollToFirstItem"
           />
         </div>
         <div id="buttons">
@@ -176,6 +191,10 @@ button {
   font-optical-sizing: auto;
 }
 
+.color-blue {
+  color: #02a79f;
+}
+
 .container {
   display: flex;
   justify-content: center;
@@ -186,8 +205,8 @@ button {
 
 #pokedex {
   width: 100%;
-  max-width: 360px;
-  border: 4px solid #111;
+  max-width: 400px;
+  border: 6px solid #111;
   border-radius: 1.5rem;
   background-color: #d2222a;
   overflow: hidden;
@@ -227,11 +246,11 @@ button {
       padding-top: 0.5rem;
 
       #red-circle {
-        width: 1.75rem;
+        width: 2rem;
         aspect-ratio: 1;
         background-color: #d2222a;
         border-radius: 50%;
-        border: 2px solid #111;
+        border: 3px solid #111;
       }
 
       #container-bar {
@@ -242,7 +261,7 @@ button {
         .bar {
           width: 4rem;
           background-color: #111;
-          height: 0.2rem;
+          height: 0.25rem;
           border-radius: 0.5rem;
         }
       }
@@ -259,7 +278,7 @@ button {
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     box-sizing: border-box;
-    border: 4px solid #c9c9ff;
+    border: 6px solid #adadad;
     z-index: 1;
 
     &.default {
@@ -406,7 +425,7 @@ button {
     gap: 0.5rem;
 
     .button {
-      width: 1.1rem;
+      width: 1.5rem;
       aspect-ratio: 1;
       border-radius: 50%;
       border: 3px solid #111;

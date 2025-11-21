@@ -42,10 +42,29 @@ const pokemonStats = computed(() => {
     value: statEntry.base_stat,
   }));
 });
+
+const audioPlayer = new Audio();
+
+const handlePlaySound = () => {
+  if (!props.pokemon.cries || !props.pokemon.cries.latest) {
+    console.warn("Nenhum Pokémon ativo ou URL de som indisponível.");
+    return;
+  }
+
+  const soundUrl = props.pokemon.cries.latest;
+
+  audioPlayer.pause();
+  audioPlayer.currentTime = 0;
+  audioPlayer.src = soundUrl;
+
+  audioPlayer.play().catch((error) => {
+    console.error("Erro ao tentar tocar o som:", error);
+  });
+};
 </script>
 
 <template>
-  <li v-if="props.pokemon" class="pokemon-card" :class="typeNames[0]">
+  <li class="pokemon-card" :class="typeNames[0]">
     <span class="pokemon-name"
       ><span class="pokemon-number"
         >Nº {{ props.pokemon.id.toString().padStart(4, "0") }}</span
@@ -70,8 +89,8 @@ const pokemonStats = computed(() => {
         {{ type.toUpperCase() }}
       </span>
     </div>
+    <div class="pokemon-sound" @click="handlePlaySound">♬</div>
   </li>
-  <li v-else-if="props.pokemon" class="pokemon-card">aa</li>
 </template>
 
 <style scoped>
@@ -90,6 +109,15 @@ const pokemonStats = computed(() => {
 
 .pokemon-number {
   color: #fff;
+}
+
+.pokemon-sound {
+  font-size: 1.25rem;
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0.5rem;
+  color: #fff;
+  cursor: pointer;
 }
 
 .pokemon-image {
