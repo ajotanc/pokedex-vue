@@ -39,6 +39,10 @@ export interface PokemonDetail {
   cries: PokemonSounds;
   stats: StatEntry[];
   description?: string;
+  species: {
+    name: string;
+    url: string;
+  }
 }
 
 export interface StatEntry {
