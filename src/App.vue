@@ -181,6 +181,10 @@ const searchExternally = async () => {
   box-sizing: border-box;
 }
 
+body {
+  margin-inline: 0.5rem;
+}
+
 body,
 #app,
 input,
@@ -198,7 +202,7 @@ button {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  padding: 1rem;
+  padding: 0 0 0 1rem;
 }
 
 #pokedex {
