@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { PokemonDetail } from "../types/pokemon";
+import type { PokemonDetail, StatEntry } from "../types/pokemon";
 
 interface Props {
   pokemon: PokemonDetail;
@@ -37,7 +37,7 @@ const typeNames = computed(() => {
 });
 
 const pokemonStats = computed(() => {
-  return props.pokemon.stats.map((statEntry) => ({
+  return props.pokemon.stats.map((statEntry: StatEntry) => ({
     name: statEntry.stat.name.toUpperCase().replace("-", " "),
     value: statEntry.base_stat,
   }));

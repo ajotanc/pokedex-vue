@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { PokemonDetail } from "./types/pokemon";
+import type { PokemonDetail } from "./types/pokemon";
 import PokemonCard from "./components/PokemonCard.vue";
 
 const pokemonList = ref<PokemonDetail[]>([]);
@@ -84,8 +84,6 @@ const searchExternally = async () => {
     isSearching.value = false;
   }
 };
-
-const sound = computed(() => props.pokemon.cries.latest);
 </script>
 
 <template>

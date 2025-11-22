@@ -37,6 +37,16 @@ export interface PokemonDetail {
   types: PokemonType[];
   sprites: PokemonSprites;
   cries: PokemonSounds;
+  stats: StatEntry[];
+}
+
+export interface StatEntry {
+  base_stat: number;
+  effort: number;
+  stat: {
+    name: string;
+    url: string;
+  };
 }
 
 export interface PokemonSounds {
