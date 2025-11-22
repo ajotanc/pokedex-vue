@@ -38,6 +38,7 @@ export interface PokemonDetail {
   sprites: PokemonSprites;
   cries: PokemonSounds;
   stats: StatEntry[];
+  description?: string;
 }
 
 export interface StatEntry {

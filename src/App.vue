@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, nextTick } from "vue";
 import type { PokemonDetail } from "./types/pokemon";
 import PokemonCard from "./components/PokemonCard.vue";
 
@@ -21,7 +21,20 @@ const fetchInitialPokemon = async () => {
     const detailedFetches = data.results.map(
       async (pokemon: { url: string }) => {
         const detailResponse = await fetch(pokemon.url);
-        return (await detailResponse.json()) as PokemonDetail;
+        const detailData = (await detailResponse.json()) as PokemonDetail;
+
+        const speciesResponse = await fetch(detailData.species.url);
+        const speciesData = await speciesResponse.json();
+
+        const flavorTextEntry = speciesData.flavor_text_entries.find(
+          (entry: any) => entry.language.name === "en"
+        );
+
+        detailData.description = flavorTextEntry
+          ? flavorTextEntry.flavor_text.replace(/[\n\f]/g, " ")
+          : "Descrição não disponível.";
+
+        return detailData;
       }
     );
 
@@ -51,8 +64,12 @@ const locallyFilteredList = computed(() => {
 });
 
 const scrollToFirstItem = () => {
-  if (!searchTerm.value && pokemonGridRef.value) {
-    pokemonGridRef.value.scrollLeft = 0;
+  if (pokemonGridRef.value) {
+    nextTick(() => {
+      if (pokemonGridRef.value) {
+        pokemonGridRef.value.scrollLeft = 0;
+      }
+    });
   }
 };
 
@@ -83,6 +100,48 @@ const searchExternally = async () => {
   } finally {
     isSearching.value = false;
   }
+};
+
+const scroll = (direction: "up" | "down" | "left" | "right") => {
+  const container = pokemonGridRef.value;
+
+  if (!container) {
+    console.error("Container de scroll não encontrado!");
+    return;
+  }
+
+  if (direction === "left" || direction === "right") {
+    const amount = container.clientWidth * (direction === "left" ? -1 : 1);
+
+    container.scrollBy({
+      left: amount,
+      behavior: "smooth",
+    });
+  }
+
+  const allCards = container.querySelectorAll("li");
+  if (allCards.length === 0) return;
+
+  const cardWidth = container.clientWidth;
+  const currentScrollLeft = container.scrollLeft;
+  const activeCardIndex = Math.round(currentScrollLeft / cardWidth);
+  const activeCardLi = allCards[activeCardIndex] as HTMLElement;
+  const innerScrollContainer = activeCardLi.querySelector(
+    ".pokemon-card-content"
+  ) as HTMLElement | null;
+
+  if (!innerScrollContainer) {
+    console.warn("Container de scroll interno não encontrado!");
+    return;
+  }
+
+  const amount = innerScrollContainer.clientHeight;
+  const scrollValue = direction === "down" ? amount : -amount;
+
+  innerScrollContainer.scrollBy({
+    top: scrollValue,
+    behavior: "smooth",
+  });
 };
 </script>
 
@@ -126,6 +185,9 @@ const searchExternally = async () => {
         <div class="pokemon-grid default" v-else-if="isLoading">
           <p>Carregando os primeiros 100 Pokémon...</p>
         </div>
+        <div class="pokemon-grid default" v-else-if="isSearching">
+          <p>Buscando Pokémon...</p>
+        </div>
         <div id="container-stuff">
           <div id="red-circle"></div>
           <div id="container-bar">
@@ -164,8 +226,31 @@ const searchExternally = async () => {
             @input="scrollToFirstItem"
           />
         </div>
-        <div id="buttons">
-          <div id="joystick" class="buttons"></div>
+        <div id="joystick">
+          <button
+            type="button"
+            class="button"
+            id="button-up"
+            @click="scroll('up')"
+          ></button>
+          <button
+            type="button"
+            class="button"
+            id="button-left"
+            @click="scroll('left')"
+          ></button>
+          <button
+            type="button"
+            class="button"
+            id="button-right"
+            @click="scroll('right')"
+          ></button>
+          <button
+            type="button"
+            class="button"
+            id="button-down"
+            @click="scroll('down')"
+          ></button>
         </div>
       </div>
     </div>
@@ -179,6 +264,11 @@ const searchExternally = async () => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  display: none;
+  width: 0px;
 }
 
 body {
@@ -292,7 +382,8 @@ button {
       font-weight: bold;
     }
 
-    li {
+    .pokemon-card {
+      width: 100%;
       flex: 0 0 100%;
       display: flex;
       align-items: center;
@@ -300,78 +391,6 @@ button {
       flex-direction: column;
       text-align: center;
       scroll-snap-align: center;
-    }
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    &::scroll-button(left),
-    &::scroll-button(right),
-    &::scroll-button(up),
-    &::scroll-button(down) {
-      content: "";
-      background-color: #474747;
-      position-anchor: --carousel;
-      display: flex;
-      position: fixed;
-      border: 0;
-      cursor: pointer;
-    }
-
-    &::scroll-button(left):hover,
-    &::scroll-button(right):hover,
-    &::scroll-button(up):hover,
-    &::scroll-button(down):hover {
-      background-color: #414141;
-    }
-
-    &::scroll-button(right) {
-      position-area: right center;
-      content: "";
-      width: 2rem;
-      height: 1.8rem;
-      border-right: 3px solid #111;
-      border-top: 3px solid #111;
-      border-bottom: 3px solid #111;
-      box-shadow: -2px 3px 0 0 #111;
-      border-radius: 0 6px 6px 0;
-    }
-
-    &::scroll-button(left) {
-      position-area: left center;
-      content: "";
-      width: 2rem;
-      height: 1.8rem;
-      border-left: 3px solid #111;
-      border-top: 3px solid #111;
-      border-bottom: 3px solid #111;
-      box-shadow: -2px 3px 0 0 #111;
-      border-radius: 6px 0 0 6px;
-    }
-
-    &::scroll-button(up) {
-      position-area: top center;
-      content: "";
-      width: 1.8rem;
-      height: 2rem;
-      border-left: 3px solid #111;
-      border-top: 3px solid #111;
-      border-right: 3px solid #111;
-      box-shadow: -2px 3px 0 0 #111;
-      border-radius: 6px 6px 0 0;
-    }
-
-    &::scroll-button(down) {
-      position-area: bottom center;
-      content: "";
-      width: 1.8rem;
-      height: 2rem;
-      border-left: 3px solid #111;
-      border-bottom: 3px solid #111;
-      border-right: 3px solid #111;
-      box-shadow: -2px 3px 0 0 #111;
-      border-radius: 0 0 6px 6px;
     }
   }
 }
@@ -454,33 +473,116 @@ button {
   justify-content: space-evenly;
   padding-bottom: 1.5rem;
 
-  #buttons {
-    width: 6rem;
+  #joystick {
+    width: 5.4rem;
     aspect-ratio: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: relative;
 
-    #joystick {
-      anchor-name: --carousel;
-      position: relative;
+    &::after {
       width: 1.6rem;
       aspect-ratio: 1;
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: #474747;
-      position: relative;
-
-      &::after {
-        content: "";
-        width: 1rem;
-        aspect-ratio: 1;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-radius: 50%;
-        border: 3px solid #111;
-      }
+      border-radius: 0.25rem;
     }
+
+    &::before {
+      width: 1.25rem;
+      aspect-ratio: 1;
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #474747;
+      border-radius: 50%;
+      border: 3px solid #111;
+      z-index: 1;
+    }
+
+    .button {
+      background-color: #474747;
+      display: flex;
+      border: 0;
+      cursor: pointer;
+      position: absolute;
+    }
+
+    .button:hover {
+      background-color: #414141;
+    }
+
+    #button-right {
+      top: 50%;
+      transform: translateY(-50%);
+      right: 0;
+      content: "";
+      width: 2rem;
+      height: 1.8rem;
+      border-right: 3px solid #111;
+      border-top: 3px solid #111;
+      border-bottom: 3px solid #111;
+      box-shadow: -2px 3px 0 0 #111;
+      border-radius: 0 6px 6px 0;
+    }
+
+    #button-left {
+      top: 50%;
+      transform: translateY(-50%);
+      left: 0;
+      content: "";
+      width: 2rem;
+      height: 1.8rem;
+      border-left: 3px solid #111;
+      border-top: 3px solid #111;
+      border-bottom: 3px solid #111;
+      box-shadow: -2px 3px 0 0 #111;
+      border-radius: 6px 0 0 6px;
+    }
+
+    #button-up {
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      content: "";
+      width: 1.8rem;
+      height: 2rem;
+      border-left: 3px solid #111;
+      border-top: 3px solid #111;
+      border-right: 3px solid #111;
+      box-shadow: -2px 3px 0 0 #111;
+      border-radius: 6px 6px 0 0;
+    }
+
+    #button-down {
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      content: "";
+      width: 1.8rem;
+      height: 2rem;
+      border-left: 3px solid #111;
+      border-bottom: 3px solid #111;
+      border-right: 3px solid #111;
+      box-shadow: -2px 3px 0 0 #111;
+      border-radius: 0 0 6px 6px;
+    }
+
+    /* &::after {
+      content: "";
+      width: 1rem;
+      aspect-ratio: 1;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      border: 3px solid #111;
+    } */
   }
 
   .search-controls {

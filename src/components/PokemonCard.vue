@@ -65,41 +65,69 @@ const handlePlaySound = () => {
 
 <template>
   <li class="pokemon-card" :class="typeNames[0]">
-    <span class="pokemon-name"
-      ><span class="pokemon-number"
-        >Nº {{ props.pokemon.id.toString().padStart(4, "0") }}</span
-      >
-      {{ formattedName.toUpperCase() }}</span
-    >
-
-    <img :src="currentImageUrl" :alt="formattedName" class="pokemon-image" />
-
-    <!-- <div class="stats-list">
-      <h4>Stats Base</h4>
-      <div v-for="stat in pokemonStats" :key="stat.name" class="stat-item">
-        <span class="stat-name"
-          >{{ stat.name }}:
-          <span class="stat-value">{{ stat.value }}</span></span
+    <div class="pokemon-card-content">
+      <div class="card pokemon-detail" :class="typeNames[0]">
+        <span class="pokemon-name"
+          ><span class="pokemon-number"
+            >Nº {{ props.pokemon.id.toString().padStart(4, "0") }}</span
+          >
+          {{ formattedName.toUpperCase() }}</span
         >
-      </div>
-    </div> -->
 
-    <div class="types">
-      <span v-for="type in typeNames" :key="type" :class="['type-badge', type]">
-        {{ type.toUpperCase() }}
-      </span>
+        <img
+          :src="currentImageUrl"
+          :alt="formattedName"
+          class="pokemon-image"
+        />
+
+        <div class="types">
+          <span
+            v-for="type in typeNames"
+            :key="type"
+            :class="['type-badge', type]"
+          >
+            {{ type.toUpperCase() }}
+          </span>
+          <div class="pokemon-sound" @click="handlePlaySound">♬</div>
+        </div>
+      </div>
+      <div class="card pokemon-stats" :class="typeNames[0]">
+        <h4>Stats Base</h4>
+        <div v-for="stat in pokemonStats" :key="stat.name" class="stat-item">
+          <span class="stat-name"
+            >{{ stat.name }}:
+            <span class="stat-value">{{ stat.value }}</span></span
+          >
+        </div>
+      </div>
+      <div class="card pokemon-description" :class="typeNames[0]">
+        <h4>Description</h4>
+        <span>{{
+          props.pokemon.description || "No description was found."
+        }}</span>
+      </div>
     </div>
-    <div class="pokemon-sound" @click="handlePlaySound">♬</div>
   </li>
 </template>
 
 <style scoped>
-.pokemon-card {
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-  position: relative;
-  overflow: hidden;
+.pokemon-card-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+}
+
+.card {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
 .pokemon-name {
@@ -126,6 +154,16 @@ const handlePlaySound = () => {
   margin: 10px 0;
   transition: all 0.2s ease-in-out;
   image-rendering: pixelated;
+}
+
+.pokemon-detail {
+  position: relative;
+}
+
+.pokemon-description {
+  span {
+    padding-inline: 0.6rem;
+  }
 }
 
 .types {
